@@ -9,6 +9,7 @@ import { createServer } from "node:http"
 
 import { AuthLive, AuthMiddlewareLive } from "@repo/auth/index.js"
 import { DatabaseLive } from "@repo/database"
+import { ReceiptExtractionFake } from "@repo/domain/services/receipt/fake.js"
 
 import { ApiRouter } from "./api/index.js"
 import { StaticFilesRouter } from "./static/index.js"
@@ -23,6 +24,7 @@ const RouterLive = HttpRouter.serve(AllRouters).pipe(
 	Layer.provide(AuthMiddlewareLive),
 	Layer.provide(AuthLive),
 	Layer.provide(DatabaseLive),
+	Layer.provide(ReceiptExtractionFake),
 	Layer.provide(HttpServer),
 	Layer.provide(NodeHttpPlatform.layer),
 	Layer.provide(NodeHttpClient.layerUndici),

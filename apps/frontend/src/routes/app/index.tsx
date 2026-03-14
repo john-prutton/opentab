@@ -1,5 +1,5 @@
 import { useAtomValue } from "@effect/atom-react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 
 import type { Api } from "@repo/domain/api/index.js"
 
@@ -25,6 +25,12 @@ function RouteComponent() {
 	return (
 		<main className="min-h-svh flex flex-col items-center justify-center gap-4">
 			<h1 className="text-2xl font-bold">Welcome, {name}!</h1>
+			<Link
+				to="/app/receipts"
+				className="text-sm underline text-foreground font-medium"
+			>
+				📷 New Receipt
+			</Link>
 			<a href={logoutUrl} className="text-sm underline text-muted-foreground">
 				Log out
 			</a>

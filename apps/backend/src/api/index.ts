@@ -15,6 +15,7 @@ import {
 	CurrentUser,
 } from "@repo/domain/services/auth/index.js"
 import { Database } from "@repo/domain/services/database/index.js"
+import { ReceiptExtraction } from "@repo/domain/services/receipt/index.js"
 
 const HealthApiGroupLive = HttpApiBuilder.group(Api, "Health", (handler) =>
 	handler.handle("health", () =>
@@ -264,6 +265,15 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 		),
 )
 
+const ReceiptApiGroupLive = HttpApiBuilder.group(Api, "receipt", (handler) =>
+	handler.handle("extract", ({ payload }) =>
+		Effect.gen(function* () {
+			const extraction = yield* ReceiptExtraction
+			return yield* extraction.extractLineItems(payload.imageDataUrl)
+		}),
+	),
+)
+
 export const ApiRouter = HttpApiBuilder.layer(Api).pipe(
-	Layer.provide([HealthApiGroupLive, AuthApiGroupLive]),
+	Layer.provide([HealthApiGroupLive, AuthApiGroupLive, ReceiptApiGroupLive]),
 )
