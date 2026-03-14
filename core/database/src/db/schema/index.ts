@@ -6,6 +6,12 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core"
 
+export {
+	sharedReceiptsTable,
+	receiptLineItemsTable,
+	receiptSelectionsTable,
+} from "./receipts.js"
+
 export const usersTable = pgTable("users", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	name: varchar("name", { length: 25 }).notNull(),

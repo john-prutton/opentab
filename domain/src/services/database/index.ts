@@ -3,6 +3,10 @@ import * as Schema from "effect/Schema"
 import * as ServiceMap from "effect/ServiceMap"
 
 import type { OAuthProvider, Session } from "@/schema/auth/index.js"
+import type {
+	ExtractedLineItem,
+	SharedReceiptView,
+} from "@/schema/receipt/index.js"
 import type { Email, User } from "@/schema/user/index.js"
 
 export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>()(
@@ -49,6 +53,24 @@ export class Database extends ServiceMap.Service<
 
 			readonly deleteSessionsForUser: (
 				userId: User["id"],
+			) => DatabaseQuery<void>
+		}
+
+		readonly receipt: {
+			readonly createSharedReceipt: (
+				ownerId: User["id"],
+				imageDataUrl: string | null,
+				items: ReadonlyArray<ExtractedLineItem>,
+			) => DatabaseQuery<string>
+
+			readonly getSharedReceipt: (
+				id: string,
+			) => DatabaseQuery<SharedReceiptView | null>
+
+			readonly upsertSelections: (
+				receiptId: string,
+				userId: User["id"],
+				selections: ReadonlyArray<{ lineItemId: string; quantity: number }>,
 			) => DatabaseQuery<void>
 		}
 	}

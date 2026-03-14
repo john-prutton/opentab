@@ -9,6 +9,7 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder"
 
 import { Api } from "@repo/domain/api"
 import { HealthApiError } from "@repo/domain/schema/health/index.js"
+import { ReceiptNotFoundError } from "@repo/domain/schema/receipt/index.js"
 import {
 	Auth,
 	AuthError,
@@ -268,12 +269,46 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 )
 
 const ReceiptApiGroupLive = HttpApiBuilder.group(Api, "receipt", (handler) =>
-	handler.handle("extract", ({ payload }) =>
-		Effect.gen(function* () {
-			const extraction = yield* ReceiptExtraction
-			return yield* extraction.extractLineItems(payload.imageDataUrl)
-		}),
-	),
+	handler
+		.handle("extract", ({ payload }) =>
+			Effect.gen(function* () {
+				const extraction = yield* ReceiptExtraction
+				return yield* extraction.extractLineItems(payload.imageDataUrl)
+			}),
+		)
+		.handle("createSession", ({ payload }) =>
+			Effect.gen(function* () {
+				const user = yield* CurrentUser
+				const db = yield* Database
+				const id = yield* db.receipt.createSharedReceipt(
+					user.id,
+					payload.imageDataUrl,
+					payload.items,
+				)
+				return { id }
+			}),
+		)
+		.handle("getSession", ({ params }) =>
+			Effect.gen(function* () {
+				const db = yield* Database
+				const receipt = yield* db.receipt.getSharedReceipt(params.id)
+				if (receipt === null) return yield* Effect.fail(new ReceiptNotFoundError())
+				return receipt
+			}),
+		)
+		.handle("updateSelections", ({ params, payload }) =>
+			Effect.gen(function* () {
+				const user = yield* CurrentUser
+				const db = yield* Database
+				const receipt = yield* db.receipt.getSharedReceipt(params.id)
+				if (receipt === null) return yield* Effect.fail(new ReceiptNotFoundError())
+				yield* db.receipt.upsertSelections(
+					params.id,
+					user.id,
+					payload.selections,
+				)
+			}),
+		),
 )
 
 export const ApiRouter = HttpApiBuilder.layer(Api).pipe(

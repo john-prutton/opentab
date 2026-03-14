@@ -31,5 +31,10 @@ export const DatabaseFake = Layer.succeed(
 					createdAt: new Date(),
 				}),
 		},
+		receipt: {
+			createSharedReceipt: () => Effect.succeed("receipt-id"),
+			getSharedReceipt: () => Effect.succeed(null),
+			upsertSelections: () => Effect.void,
+		},
 	}),
 )

@@ -1,6 +1,11 @@
 import * as Schema from "effect/Schema"
 import * as SchemaTransformation from "effect/SchemaTransformation"
 
+export class ReceiptNotFoundError extends Schema.TaggedErrorClass<ReceiptNotFoundError>()(
+	"ReceiptNotFoundError",
+	{},
+) {}
+
 export type ReceiptStatus = typeof ReceiptStatusSchema.Type
 export const ReceiptStatusSchema = Schema.Literal(
 	"pending",
@@ -44,5 +49,30 @@ export const ReceiptLineItemSchema = Schema.Struct({
 	quantity: Schema.Number.pipe(Schema.NullOr),
 	unitPrice: Schema.Number.pipe(Schema.NullOr),
 	totalPrice: Schema.Number,
+	createdAt: DateFromEpochMillis,
+})
+
+export type SharedReceiptLineItem = typeof SharedReceiptLineItemSchema.Type
+export const SharedReceiptLineItemSchema = Schema.Struct({
+	id: Schema.NonEmptyString,
+	description: Schema.NonEmptyString,
+	quantity: Schema.Number.pipe(Schema.NullOr),
+	unitPrice: Schema.Number.pipe(Schema.NullOr),
+	totalPrice: Schema.Number,
+})
+
+export type ParticipantSelections = typeof ParticipantSelectionsSchema.Type
+export const ParticipantSelectionsSchema = Schema.Struct({
+	userId: Schema.NonEmptyString,
+	userName: Schema.NonEmptyString,
+	selections: Schema.Record({ key: Schema.String, value: Schema.Number }),
+})
+
+export type SharedReceiptView = typeof SharedReceiptViewSchema.Type
+export const SharedReceiptViewSchema = Schema.Struct({
+	id: Schema.NonEmptyString,
+	imageDataUrl: Schema.String.pipe(Schema.NullOr),
+	lineItems: Schema.Array(SharedReceiptLineItemSchema),
+	participants: Schema.Array(ParticipantSelectionsSchema),
 	createdAt: DateFromEpochMillis,
 })
