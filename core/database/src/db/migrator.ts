@@ -1,3 +1,4 @@
+import { Layer } from "effect"
 import * as Config from "effect/Config"
 import * as Effect from "effect/Effect"
 import * as FileSystem from "effect/FileSystem"
@@ -68,7 +69,7 @@ const RunMigrations = Effect.gen(function* () {
 	yield* Effect.log("Finished migrations", resolvedMigrations)
 })
 
-export const MigrateDatabase = Effect.gen(function* () {
+const MigrateDatabase = Effect.gen(function* () {
 	const connectionProperties = {
 		host: yield* Config.string("OPENTAB_POSTGRES_HOST"),
 		port: yield* Config.int("OPENTAB_POSTGRES_PORT"),
@@ -92,3 +93,5 @@ export const MigrateDatabase = Effect.gen(function* () {
 		Effect.scoped,
 	)
 }).pipe(Effect.scoped)
+
+export const MigrateDatabaseLayer = Layer.effectDiscard(MigrateDatabase)

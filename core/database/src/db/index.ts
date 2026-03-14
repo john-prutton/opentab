@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 import { Database } from "@repo/domain/services/database"
 
 import { DrizzleDb, DrizzleDbLive } from "./drizzle.js"
-import { MigrateDatabase } from "./migrator.js"
+import { MigrateDatabaseLayer } from "./migrator.js"
 import { PgPoolClientLive } from "./pool.js"
 import {
 	oauthAccountsTable,
@@ -20,8 +20,6 @@ export { PgPoolClient, PgPoolClientLive } from "./pool.js"
 export const DatabaseLive = Layer.effect(
 	Database,
 	Effect.gen(function* () {
-		yield* MigrateDatabase
-
 		const db = yield* DrizzleDb
 
 		return {
@@ -93,4 +91,8 @@ export const DatabaseLive = Layer.effect(
 			},
 		}
 	}),
-).pipe(Layer.provide(DrizzleDbLive), Layer.provide(PgPoolClientLive))
+).pipe(
+	Layer.provide(DrizzleDbLive),
+	Layer.provide(PgPoolClientLive),
+	Layer.provide(MigrateDatabaseLayer),
+)
