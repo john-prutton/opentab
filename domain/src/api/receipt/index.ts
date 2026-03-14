@@ -34,7 +34,7 @@ export class ReceiptApiGroup extends HttpApiGroup.make("receipt")
 	.add(
 		HttpApiEndpoint.get("getSession", "/sessions/:id", {
 			success: SharedReceiptViewSchema,
-			error: Schema.Union(DatabaseError, ReceiptNotFoundError),
+			error: Schema.Union([DatabaseError, ReceiptNotFoundError]),
 			params: {
 				id: Schema.NonEmptyString,
 			},
@@ -42,7 +42,7 @@ export class ReceiptApiGroup extends HttpApiGroup.make("receipt")
 	)
 	.add(
 		HttpApiEndpoint.put("updateSelections", "/sessions/:id/selections", {
-			error: Schema.Union(DatabaseError, ReceiptNotFoundError),
+			error: Schema.Union([DatabaseError, ReceiptNotFoundError]),
 			params: {
 				id: Schema.NonEmptyString,
 			},

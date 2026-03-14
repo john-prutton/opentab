@@ -7,12 +7,12 @@ export class ReceiptNotFoundError extends Schema.TaggedErrorClass<ReceiptNotFoun
 ) {}
 
 export type ReceiptStatus = typeof ReceiptStatusSchema.Type
-export const ReceiptStatusSchema = Schema.Literal(
+export const ReceiptStatusSchema = Schema.Literals([
 	"pending",
 	"processing",
 	"complete",
 	"failed",
-)
+])
 
 export type ExtractedLineItem = typeof ExtractedLineItemSchema.Type
 export const ExtractedLineItemSchema = Schema.Struct({
@@ -65,7 +65,7 @@ export type ParticipantSelections = typeof ParticipantSelectionsSchema.Type
 export const ParticipantSelectionsSchema = Schema.Struct({
 	userId: Schema.NonEmptyString,
 	userName: Schema.NonEmptyString,
-	selections: Schema.Record({ key: Schema.String, value: Schema.Number }),
+	selections: Schema.Record(Schema.String, Schema.Number),
 })
 
 export type SharedReceiptView = typeof SharedReceiptViewSchema.Type

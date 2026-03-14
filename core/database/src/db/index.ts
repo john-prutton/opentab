@@ -92,151 +92,149 @@ export const DatabaseLive = Layer.effect(
 						db.delete(sessionsTable).where(eq(sessionsTable.userId, userId)),
 					),
 			},
-		},
+			receipt: {
+				createSharedReceipt: (ownerId, imageDataUrl, items) =>
+					TryQuery(
+						db.transaction(async (tx) => {
+							const [receipt] = await tx
+								.insert(sharedReceiptsTable)
+								.values({ ownerId, imageDataUrl })
+								.returning()
+							await tx.insert(receiptLineItemsTable).values(
+								items.map((item) => ({
+									receiptId: receipt!.id,
+									description: item.description,
+									quantity:
+										item.quantity !== null ? String(item.quantity) : null,
+									unitPrice:
+										item.unitPrice !== null ? String(item.unitPrice) : null,
+									totalPrice: String(item.totalPrice),
+								})),
+							)
+							return receipt!.id
+						}),
+					),
 
-		receipt: {
-			createSharedReceipt: (ownerId, imageDataUrl, items) =>
-				TryQuery(
-					db.transaction(async (tx) => {
-						const [receipt] = await tx
-							.insert(sharedReceiptsTable)
-							.values({ ownerId, imageDataUrl })
-							.returning()
-						await tx.insert(receiptLineItemsTable).values(
-							items.map((item) => ({
-								receiptId: receipt!.id,
-								description: item.description,
-								quantity:
-									item.quantity !== null ? String(item.quantity) : null,
-								unitPrice:
-									item.unitPrice !== null ? String(item.unitPrice) : null,
-								totalPrice: String(item.totalPrice),
-							})),
-						)
-						return receipt!.id
-					}),
-				),
-
-			getSharedReceipt: (id) =>
-				TryQuery(
-					db
-						.select({
-							receipt: sharedReceiptsTable,
-							lineItem: receiptLineItemsTable,
-							selection: receiptSelectionsTable,
-							user: usersTable,
-						})
-						.from(sharedReceiptsTable)
-						.leftJoin(
-							receiptLineItemsTable,
-							eq(receiptLineItemsTable.receiptId, sharedReceiptsTable.id),
-						)
-						.leftJoin(
-							receiptSelectionsTable,
-							and(
-								eq(receiptSelectionsTable.receiptId, sharedReceiptsTable.id),
-								eq(
-									receiptSelectionsTable.lineItemId,
-									receiptLineItemsTable.id,
+				getSharedReceipt: (id) =>
+					TryQuery(
+						db
+							.select({
+								receipt: sharedReceiptsTable,
+								lineItem: receiptLineItemsTable,
+								selection: receiptSelectionsTable,
+								user: usersTable,
+							})
+							.from(sharedReceiptsTable)
+							.leftJoin(
+								receiptLineItemsTable,
+								eq(receiptLineItemsTable.receiptId, sharedReceiptsTable.id),
+							)
+							.leftJoin(
+								receiptSelectionsTable,
+								and(
+									eq(receiptSelectionsTable.receiptId, sharedReceiptsTable.id),
+									eq(
+										receiptSelectionsTable.lineItemId,
+										receiptLineItemsTable.id,
+									),
 								),
-							),
-						)
-						.leftJoin(
-							usersTable,
-							eq(usersTable.id, receiptSelectionsTable.userId),
-						)
-						.where(eq(sharedReceiptsTable.id, id))
-						.then((rows) => {
-							if (rows.length === 0) return null
+							)
+							.leftJoin(
+								usersTable,
+								eq(usersTable.id, receiptSelectionsTable.userId),
+							)
+							.where(eq(sharedReceiptsTable.id, id))
+							.then((rows) => {
+								if (rows.length === 0) return null
 
-							const receipt = rows[0]!.receipt
+								const receipt = rows[0]!.receipt
 
-							const lineItemsMap = new Map<
-								string,
-								{
-									id: string
-									description: string
-									quantity: number | null
-									unitPrice: number | null
-									totalPrice: number
-								}
-							>()
-							const participantsMap = new Map<
-								string,
-								{
-									userId: string
-									userName: string
-									selections: Record<string, number>
-								}
-							>()
+								const lineItemsMap = new Map<
+									string,
+									{
+										id: string
+										description: string
+										quantity: number | null
+										unitPrice: number | null
+										totalPrice: number
+									}
+								>()
+								const participantsMap = new Map<
+									string,
+									{
+										userId: string
+										userName: string
+										selections: Record<string, number>
+									}
+								>()
 
-							for (const row of rows) {
-								if (row.lineItem && !lineItemsMap.has(row.lineItem.id)) {
-									lineItemsMap.set(row.lineItem.id, {
-										id: row.lineItem.id,
-										description: row.lineItem.description,
-										quantity:
-											row.lineItem.quantity !== null
-												? Number(row.lineItem.quantity)
-												: null,
-										unitPrice:
-											row.lineItem.unitPrice !== null
-												? Number(row.lineItem.unitPrice)
-												: null,
-										totalPrice: Number(row.lineItem.totalPrice),
-									})
-								}
-
-								if (row.selection && row.user) {
-									if (!participantsMap.has(row.user.id)) {
-										participantsMap.set(row.user.id, {
-											userId: row.user.id,
-											userName: row.user.name,
-											selections: {},
+								for (const row of rows) {
+									if (row.lineItem && !lineItemsMap.has(row.lineItem.id)) {
+										lineItemsMap.set(row.lineItem.id, {
+											id: row.lineItem.id,
+											description: row.lineItem.description,
+											quantity:
+												row.lineItem.quantity !== null
+													? Number(row.lineItem.quantity)
+													: null,
+											unitPrice:
+												row.lineItem.unitPrice !== null
+													? Number(row.lineItem.unitPrice)
+													: null,
+											totalPrice: Number(row.lineItem.totalPrice),
 										})
 									}
-									participantsMap.get(row.user.id)!.selections[
-										row.selection.lineItemId
-									] = row.selection.quantity
+
+									if (row.selection && row.user) {
+										if (!participantsMap.has(row.user.id)) {
+											participantsMap.set(row.user.id, {
+												userId: row.user.id,
+												userName: row.user.name,
+												selections: {},
+											})
+										}
+										participantsMap.get(row.user.id)!.selections[
+											row.selection.lineItemId
+										] = row.selection.quantity
+									}
 								}
-							}
 
-							return {
-								id: receipt.id,
-								imageDataUrl: receipt.imageDataUrl ?? null,
-								lineItems: Array.from(lineItemsMap.values()),
-								participants: Array.from(participantsMap.values()),
-								createdAt: receipt.createdAt,
-							}
-						}),
-				),
+								return {
+									id: receipt.id,
+									imageDataUrl: receipt.imageDataUrl ?? null,
+									lineItems: Array.from(lineItemsMap.values()),
+									participants: Array.from(participantsMap.values()),
+									createdAt: receipt.createdAt,
+								}
+							}),
+					),
 
-			upsertSelections: (receiptId, userId, selections) =>
-				TryQuery(
-					selections.length === 0
-						? Promise.resolve()
-						: db
-								.insert(receiptSelectionsTable)
-								.values(
-									selections.map((s) => ({
-										receiptId,
-										userId,
-										lineItemId: s.lineItemId,
-										quantity: s.quantity,
-									})),
-								)
-								.onConflictDoUpdate({
-									target: [
-										receiptSelectionsTable.receiptId,
-										receiptSelectionsTable.userId,
-										receiptSelectionsTable.lineItemId,
-									],
-									set: { quantity: sql`excluded.quantity` },
-								})
-								.then(() => undefined),
-				),
-		},
-	}
+				upsertSelections: (receiptId, userId, selections) =>
+					TryQuery(
+						selections.length === 0
+							? Promise.resolve()
+							: db
+									.insert(receiptSelectionsTable)
+									.values(
+										selections.map((s) => ({
+											receiptId,
+											userId,
+											lineItemId: s.lineItemId,
+											quantity: s.quantity,
+										})),
+									)
+									.onConflictDoUpdate({
+										target: [
+											receiptSelectionsTable.receiptId,
+											receiptSelectionsTable.userId,
+											receiptSelectionsTable.lineItemId,
+										],
+										set: { quantity: sql`excluded.quantity` },
+									})
+									.then(() => undefined),
+					),
+			},
+		}
 	}),
 ).pipe(
 	Layer.provide(DrizzleDbLive),
