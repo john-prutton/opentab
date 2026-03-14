@@ -1,0 +1,29 @@
+{
+	"name": "opentab",
+	"scripts": {
+		"dev": "dotenv -e .env.dev -- turbo run dev",
+		"build": "turbo run build",
+		"test": "turbo run test",
+		"clean": "turbo run clean",
+		"lint": "turbo run lint",
+		"format": "prettier -w .",
+		"deps:fix": "syncpack fix"
+	},
+	"packageManager": "pnpm@10.27.0",
+	"devDependencies": {
+		"@effect/language-service": "^0.79.0",
+		"@effect/vitest": "4.0.0-beta.30",
+		"@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+		"@repo/typescript": "workspace:^",
+		"@types/node": "^24.10.13",
+		"dotenv-cli": "^11.0.0",
+		"eslint": "^10.0.1",
+		"nodemon": "^3.1.13",
+		"prettier": "^3.8.1",
+		"syncpack": "^14.2.0",
+		"tsc-alias": "^1.8.16",
+		"turbo": "^2.8.10",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
+	}
+}

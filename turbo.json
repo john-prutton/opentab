@@ -1,0 +1,28 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"ui": "tui",
+	"globalEnv": ["OPENTAB_*", "NODE_ENV"],
+	"tasks": {
+		"dev": {
+			"persistent": true,
+			"cache": false
+		},
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/"],
+			"passThroughEnv": ["*"]
+		},
+		"test": {
+			"dependsOn": [],
+			"outputs": ["dist/"],
+			"passThroughEnv": ["*"]
+		},
+		"clean": {
+			"persistent": false,
+			"cache": false
+		},
+		"lint": {
+			"dependsOn": ["^lint"]
+		}
+	}
+}

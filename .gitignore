@@ -1,0 +1,8 @@
+.env*
+!.env.sample
+
+**/node_modules/
+**/dist/
+**/.turbo/
+**/.tanstack/
+**/routeTree.gen.ts

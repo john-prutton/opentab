@@ -1,0 +1,39 @@
+{
+	"$schema": "node_modules/syncpack/schema.json",
+	"indent": "\t",
+	"versionGroups": [
+		{
+			"label": "Workspace packages",
+			"dependencies": [
+				"@repo/*"
+			],
+			"pinVersion": "workspace:^"
+		},
+		{
+			"label": "Effect packages",
+			"dependencies": [
+				"effect",
+				"@effect/*",
+				"!@effect/language-service"
+			],
+			"pinVersion": "4.0.0-beta.30"
+		},
+		{
+			"label": "React packages",
+			"dependencies": [
+				"react",
+				"react-dom",
+				"@types/react",
+				"@types/react-dom"
+			],
+			"pinVersion": "^19.2.3"
+		},
+		{
+			"label": "Tanstack Router",
+			"dependencies": [
+				"@tanstack/react-router"
+			],
+			"pinVersion": "^1.132.0"
+		}
+	]
+}
