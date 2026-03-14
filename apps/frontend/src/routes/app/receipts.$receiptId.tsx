@@ -149,10 +149,16 @@ function SharedReceiptPage() {
 			? auth.user!.id
 			: null
 
+	// reset when navigating to a different receipt
+	useEffect(() => {
+		initializedRef.current = false
+		setMySelections({})
+	}, [receiptId])
+
 	// initialize mySelections from server on first successful load
 	useEffect(() => {
 		if (initializedRef.current) return
-		if (!AsyncResult.isSuccess(receiptResult)) return
+		if (AsyncResult.isWaiting(receiptResult) || AsyncResult.isFailure(receiptResult)) return
 		if (!myUserId) return
 
 		const receipt = AsyncResult.getOrThrow(receiptResult)

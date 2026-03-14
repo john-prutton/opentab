@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 
-import { and, eq } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import { Database } from "@repo/domain/services/database"
 
@@ -97,26 +97,24 @@ export const DatabaseLive = Layer.effect(
 		receipt: {
 			createSharedReceipt: (ownerId, imageDataUrl, items) =>
 				TryQuery(
-					db
-						.insert(sharedReceiptsTable)
-						.values({ ownerId, imageDataUrl })
-						.returning()
-						.then(([receipt]) =>
-							db
-								.insert(receiptLineItemsTable)
-								.values(
-									items.map((item) => ({
-										receiptId: receipt!.id,
-										description: item.description,
-										quantity:
-											item.quantity !== null ? String(item.quantity) : null,
-										unitPrice:
-											item.unitPrice !== null ? String(item.unitPrice) : null,
-										totalPrice: String(item.totalPrice),
-									})),
-								)
-								.then(() => receipt!.id),
-						),
+					db.transaction(async (tx) => {
+						const [receipt] = await tx
+							.insert(sharedReceiptsTable)
+							.values({ ownerId, imageDataUrl })
+							.returning()
+						await tx.insert(receiptLineItemsTable).values(
+							items.map((item) => ({
+								receiptId: receipt!.id,
+								description: item.description,
+								quantity:
+									item.quantity !== null ? String(item.quantity) : null,
+								unitPrice:
+									item.unitPrice !== null ? String(item.unitPrice) : null,
+								totalPrice: String(item.totalPrice),
+							})),
+						)
+						return receipt!.id
+					}),
 				),
 
 			getSharedReceipt: (id) =>
@@ -233,7 +231,7 @@ export const DatabaseLive = Layer.effect(
 										receiptSelectionsTable.userId,
 										receiptSelectionsTable.lineItemId,
 									],
-									set: { quantity: receiptSelectionsTable.quantity },
+									set: { quantity: sql`excluded.quantity` },
 								})
 								.then(() => undefined),
 				),
