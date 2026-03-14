@@ -1,68 +1,19 @@
-Table MealPortion {
-  ID int [primary key, increment]
-  IDMeal int [not null, ref: > Meal.ID]
-  CreatedDate Date [not null]
-  Amount decimal [not null]
-}
-
-Table MealIngredient {
-  ID int [primary key, increment]
-  IDMeal int [not null, ref: > Meal.ID]
-  IDIngredient int [not null, ref: < Ingredient.ID]
-  Amount decimal [not null]
-}
-
-Table Meal {
-  ID int [primary key, increment]
-  IDKitchen uuid [not null, ref: > Kitchen.ID]
-  CreatedDate Date [not null]
-  ModifiedDate Date [not null]
-  ActualYield decimal [not null]
-  Remaining decimal [not null]
-  Exhausted bit [not null]
-  ExhaustedDate Date
-  IDNutritionalInformation int [not null, ref: - NutritionalInformation.ID]
-}
-
-Table InventoryItem {
-  ID int [primary key, increment]
-  IDIngredient int [not null, ref: > Ingredient.ID ]
-  InitialAmount decimal [not null]
-  CurrentAmount decimal [not null]
-  CreatedDate Date [not null]
-  ExpiryDate Date [not null]
-  ModifiedDate Date [null]
-}
-
-Table Ingredient {
-  ID int [primary key, increment]
-  IDKitchen uuid [not null, ref: > Kitchen.ID]
-  Name varchar
-  DefaultUnit varchar
-  IDNutritionalInformation int [not null, ref: - NutritionalInformation.ID ]
-}
-
-Table NutritionalInformation {
-  ID int [primary key, increment]
-  Calories int [not null]
-  // Percentages
-  Protein decimal [not null]
-  Carbohydrate decimal [not null]
-  Fat decimal [not null]
-}
-
-Table KitchenUser {
-  IDKitchen uuid [not null, ref: - Kitchen.ID]
-  IDUser uuid [not null, ref: - User.ID]
-  indexes {
-    (IDKitchen, IDUser) [pk]
-  }
-}
-
-Table Kitchen {
+Table Receipt {
   ID uuid [primary key]
+  IDUser uuid [not null, ref: > User.ID]
+  ImageUrl varchar [not null]
+  Status varchar [not null] // enum: 'pending', 'processing', 'complete', 'failed'
   CreatedDate Date [not null]
-  ModifiedDate Date [not null]
+}
+
+Table ReceiptLineItem {
+  ID uuid [primary key]
+  IDReceipt uuid [not null, ref: > Receipt.ID]
+  Description varchar [not null]
+  Quantity decimal [null]
+  UnitPrice decimal [null]
+  TotalPrice decimal [not null]
+  CreatedDate Date [not null]
 }
 
 Table User {
@@ -74,11 +25,11 @@ Table User {
 }
 
 Table Session {
-	ID uuid [primary key]
-  IDUser uuid [not null, ref: > User.ID] 
+  ID uuid [primary key]
+  IDUser uuid [not null, ref: > User.ID]
   ExpiryDate Date [not null]
   indexes {
-    IDUser   
+    IDUser
   }
 }
 
