@@ -59,7 +59,7 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 						value: query.redirect,
 					})
 
-				yield* HttpEffect.appendPreResponseHandler((_req, response) =>
+				yield* HttpEffect.appendPreResponseHandler((req, response) =>
 					HttpServerResponse.setCookies(
 						response,
 						cookies.map(({ value, name }) => [
@@ -73,7 +73,19 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 								sameSite: "lax",
 							},
 						]),
-					).pipe(Effect.catchTag("CookieError", (e) => Effect.die(e))),
+					).pipe(
+					Effect.catchTag("CookieError", () =>
+						Effect.fail(
+							new HttpServerError.HttpServerError({
+								reason: new HttpServerError.ResponseError({
+									request: req,
+									response,
+									description: "Failed to set OAuth cookies on response",
+								}),
+							}),
+						),
+					),
+				),
 				)
 
 				return HttpServerResponse.redirect(url, { status: 302 })
@@ -82,16 +94,12 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 
 		.handle("callback", ({ request, params: { provider } }) =>
 			Effect.gen(function* () {
-				const isProduction =
-					(yield* Config.string("NODE_ENV")
-						.asEffect()
-						.pipe(
-							Effect.catchTag("ConfigError", () =>
-								Effect.fail(
-									new AuthError({ message: "Failed to get NODE_ENV" }),
-								),
-							),
-						)) === "production"
+				const isProduction = yield* Config.string("NODE_ENV")
+					.asEffect()
+					.pipe(
+						Effect.catchTag("ConfigError", () => Effect.succeed("development")),
+						Effect.map((env) => env === "production"),
+					)
 
 				const url = HttpServerRequest.toURL(request)
 				if (!url)
@@ -109,18 +117,18 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 				let user = yield* db.user.getUserByEmail(oauthUser.email)
 
 				if (user === null) {
-					const userId = yield* db.user.createUser({
+					yield* db.user.createUser({
 						name: oauthUser.name ?? oauthUser.email,
 						email: oauthUser.email,
 						avatarUrl: oauthUser.avatarUrl ?? null,
 					})
-					user = {
-						id: userId,
-						name: oauthUser.name ?? oauthUser.email,
-						email: oauthUser.email,
-						avatarUrl: oauthUser.avatarUrl ?? null,
-						createdAt: new Date(),
-					}
+					user = yield* db.user.getUserByEmail(oauthUser.email).pipe(
+						Effect.flatMap((u) =>
+							u === null
+								? Effect.fail(new AuthError({ message: "Failed to retrieve created user" }))
+								: Effect.succeed(u),
+						),
+					)
 				}
 
 				yield* db.auth.recordUserOAuthProvider(
@@ -225,18 +233,12 @@ const AuthApiGroupLive = HttpApiBuilder.group(Api, "auth", (handler) =>
 						),
 					)
 
-				const isProduction =
-					(yield* Config.string("NODE_ENV")
-						.asEffect()
-						.pipe(
-							Effect.catchTag("ConfigError", (e) =>
-								Effect.fail(
-									new AuthError({
-										message: `Failed to get env var: ${e.message}`,
-									}),
-								),
-							),
-						)) === "production"
+				const isProduction = yield* Config.string("NODE_ENV")
+					.asEffect()
+					.pipe(
+						Effect.catchTag("ConfigError", () => Effect.succeed("development")),
+						Effect.map((env) => env === "production"),
+					)
 
 				yield* HttpEffect.appendPreResponseHandler((request, response) =>
 					HttpServerResponse.setCookie(response, "session", "", {

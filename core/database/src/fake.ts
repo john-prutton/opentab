@@ -27,7 +27,7 @@ export const DatabaseFake = Layer.succeed(
 					id: "",
 					name: "",
 					email: "",
-					avatarUrl: "",
+					avatarUrl: null,
 					createdAt: new Date(),
 				}),
 		},

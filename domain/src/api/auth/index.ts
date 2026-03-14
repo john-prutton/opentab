@@ -27,7 +27,10 @@ export class AuthApiGroup extends HttpApiGroup.make("auth")
 	.add(
 		HttpApiEndpoint.get("callback", "/callback/:provider", {
 			error: Schema.Union([AuthError, DatabaseError]),
-			query: Schema.Any,
+			query: {
+				code: Schema.String.pipe(Schema.optional),
+				state: Schema.String.pipe(Schema.optional),
+			},
 			params: {
 				provider: OAuthProviderSchema,
 			},

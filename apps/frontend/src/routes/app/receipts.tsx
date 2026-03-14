@@ -265,7 +265,7 @@ function ReceiptsPage() {
 							<CardContent className="pt-0">
 								{phase.items.map((selection, i) => (
 									<LineItemRow
-										key={i}
+										key={selection.item.description}
 										selection={selection}
 										onQuantityChange={(next) => updateQuantity(i, next)}
 									/>

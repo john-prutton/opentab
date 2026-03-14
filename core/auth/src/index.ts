@@ -100,7 +100,7 @@ export const AuthLive = Layer.effect(
 					Effect.catchTag("DatabaseError", (e) =>
 						Effect.fail(
 							new AuthError({
-								message: `Failed to delete session ${token}: ${e.message}`,
+								message: `Failed to delete session: ${e.message}`,
 							}),
 						),
 					),
